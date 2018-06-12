@@ -40,6 +40,8 @@ function readLine({base, id}, callback) {
 		input: fs.createReadStream(base)
 	});
 
+	const wl = fs.createWriteStream(`/Volumes/HDD/GSoC'18/dumps/authorParsed-${id}.json`, {'flags': 'a'});
+
 	let count = 0;
 	const set = new Set();
 
@@ -48,17 +50,20 @@ function readLine({base, id}, callback) {
 		try {
 			const json = JSON.parse(line.split('\t')[4]);
 			Object.keys(json).forEach(key => set.add(key));
+			wl.write(JSON.stringify(json, null, 4) + '\n');
 		}
 		catch (err) {
 			log.warning(
 				`[WORKER::${id}] Error in ${fileName} in line number ${count}.`,
 				'Skipping. Record for reference: \n [[',
-				line, ']]'
+				line, ']] \n',
+				err
 			);
 		}
 	});
 
 	rl.on('close', () => {
+		wl.end();
 		callback(null, {workerCount: count, workerSet: set});
 	});
 }
